@@ -18,6 +18,7 @@ mono_crash.*
 *.exp
 *.idb
 *.txt
+*.lib
 Win32
 x64
 

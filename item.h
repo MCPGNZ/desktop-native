@@ -10,11 +10,13 @@
 
 struct item_data
 {
-    LPWSTR name;
+    LPCWSTR name;
     IShellItem* item;
     int x;
     int y;
 };
 
-extern "C" DESKTOP_FRAMEWORK_API  void item_rename(item_data * token, LPWSTR name);
+extern "C" DESKTOP_FRAMEWORK_API  void item_name_get(item_data * token);
+
+extern "C" DESKTOP_FRAMEWORK_API  void item_update_name(item_data * token);
 extern "C" DESKTOP_FRAMEWORK_API  void item_update_position(item_data * token);

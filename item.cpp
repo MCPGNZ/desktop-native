@@ -9,47 +9,27 @@
 #include "framework.h"
 #include "desktop.h"
 
-void item_rename(item_data* token, LPWSTR name)
+void item_name_get(item_data* token)
 {
-    SFGAOF attributes;
-    auto hr = token->item->GetAttributes(SFGAO_FILESYSTEM, &attributes);
-    log(hr, "item->GetAttributes(SFGAO_FILESYSTEM, &attributes)");
+}
 
-    if ((attributes & SFGAO_FILESYSTEM) != 0)
+void item_update_name(item_data* token)
+{
+    CComPtr<ITransferSource> transfer_source;
+    auto hr = token->item->BindToHandler(nullptr, BHID_Transfer, IID_PPV_ARGS(&transfer_source));
+    log(hr, "item->BindToHandler(BHID_Transfer)");
+
+    IShellItem* result;
+    hr = transfer_source->RenameItem(token->item, token->name, TSF_USE_FULL_ACCESS, &result);
+
+    /* skip successfull hresults */
+    if ((hr < COPYENGINE_S_YES) && (hr > COPYENGINE_S_COLLISIONRESOLVED))
     {
-        CComHeapPtr<WCHAR> path;
-        hr = token->item->GetDisplayName(SIGDN_FILESYSPATH, &path);
-        log(hr, "item->GetDisplayName(SIGDN_FILESYSPATH, &name)");
-
-        if (!path) { return; }
-
-        const auto original_path = std::wstring(path);
-        const auto directory = std::filesystem::path(original_path).parent_path();
-        const auto new_path = std::wstring(directory) + L"//" + std::wstring(name);
-
-        CoTaskMemFree(path);
-
-        /* think about: MoveFileExW with MOVEFILE_WRITE_THROUGH to block? */
-        //const auto r =  MoveFileW(original_path.c_str(), new_path.c_str());
-       // log(r != FALSE, "MoveFileW((LPCWSTR)path, (LPCWSTR)result)");
-
-        CComPtr<ITransferSource> transfer_source;
-        hr = token->item->BindToHandler(nullptr, BHID_Transfer, IID_PPV_ARGS(&transfer_source));
-        log(hr, "item->BindToHandler(BHID_Transfer)");
-
-        CComPtr<IShellItem> parent;
-        hr =  token->item->GetParent(&parent);
-        log(hr, "item->GetParent(&parent)");
-
-        IShellItem* result;
-        hr = transfer_source->RenameItem(token->item, name, TSF_NORMAL, &result);
         log(hr, "transfer_source->RenameItem");
-
-        token->item = result;
-        token->name = name;
-        return;
     }
-    log(false, "item_rename: no SFGAO_FILESYSTEM for item, cannot rename");
+
+    token->item->Release();
+    token->item = result;
 }
 
 void item_update_position(item_data* token)
