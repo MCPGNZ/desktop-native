@@ -5,7 +5,6 @@
 #include <shlobj.h>
 #include <shobjidl.h>
 #include <wtypes.h>
-#include <atlcomcli.h>
 
 #ifdef DESKTOP_FRAMEWORK_EXPORTS
 #define DESKTOP_FRAMEWORK_API __declspec(dllexport)
