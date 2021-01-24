@@ -19,5 +19,5 @@ extern IFolderView2* desktop_folder_view;
 
 extern "C" DESKTOP_FRAMEWORK_API  void desktop_initialize();
 
-extern "C" DESKTOP_FRAMEWORK_API  int desktop_folders_count();
-extern "C" DESKTOP_FRAMEWORK_API  void desktop_folders(item_data * items);
+extern "C" DESKTOP_FRAMEWORK_API  void desktop_get_item_position(LPWSTR absolute_path, int* x, int* y);
+extern "C" DESKTOP_FRAMEWORK_API  void desktop_set_item_position(LPWSTR absolute_path, int x, int y);

@@ -23,8 +23,6 @@ HANDLE desktop_process;
 IShellFolder* desktop_shell_folder;
 IFolderView2* desktop_folder_view;
 
-static item_data* desktop_items;
-
 std::string join(const std::vector<std::string>::const_iterator begin, const std::vector<std::string>::const_iterator end, const std::string& separator) {
     if (begin == end) {
         return "";
@@ -68,11 +66,11 @@ HWND find_window_by_class_path(const std::vector<std::string>& path) {
 
 HWND query_desktop_handle()
 {
-    HWND desktop = find_window_by_class_path({ progman_id, def_view_id, sys_list_id });
+    HWND desktop = find_window_by_class_path({progman_id, def_view_id, sys_list_id});
     if (desktop != NULL) {
         return desktop;
     }
-    return find_window_by_class_path({ workerw_id, def_view_id, sys_list_id });
+    return find_window_by_class_path({workerw_id, def_view_id, sys_list_id});
 }
 
 HANDLE query_desktop_process(HWND handle)
@@ -138,47 +136,41 @@ void desktop_initialize()
     desktop_shell_folder = query_desktop_shell_folder();
 }
 
-int desktop_folders_count()
+LPITEMIDLIST to_relative_pidl(LPWSTR absolute_path)
 {
-    int count;
-    auto hr = desktop_folder_view->ItemCount(0, &count);
-    log(hr, "folder_view->ItemCount(0, &count)");
+    CComPtr<IShellItem> item;
+    auto hr = SHCreateItemFromParsingName(absolute_path, nullptr, IID_PPV_ARGS(&item));
+    log(hr, "SHCreateItemFromParsingName(absolute_path, nullptr, IID_PPV_ARGS(&item))");
 
-    return count;
+    CComHeapPtr<WCHAR> relative_path;
+    hr = item->GetDisplayName(SIGDN_PARENTRELATIVEPARSING, &relative_path);
+    log(hr, "GetDisplayName(SIGDN_PARENTRELATIVEPARSING, &relative_path)");
+
+    return ILCreateFromPathW(relative_path);
 }
-void desktop_folders(item_data* items)
+LPITEMIDLIST to_absolute_pidl(LPWSTR absolute_path)
 {
-    desktop_items = items;
+    return ILCreateFromPathW(absolute_path);
+}
 
-    int count = desktop_folders_count();
-    for (int i = 0; i < count; ++i)
-    {
-        CComHeapPtr<ITEMIDLIST> pidl;
-        auto hr = desktop_folder_view->Item(i, &pidl);
-        log(hr, "folder_view->Item(i, &pidl)");
+void desktop_get_item_position(LPWSTR absolute_path, int* x, int* y)
+{
+    CComHeapPtr<ITEMIDLIST> pidl {to_relative_pidl(absolute_path)};
+    POINT point;
 
-        /* todo: make shure that item_data releases this */
-        IShellItem* item;
+    auto hr = desktop_folder_view->GetItemPosition(pidl, &point);
+    log(hr, "desktop_folder_view->GetItemPosition");
 
-        /* todo: make shure that item_data releases this */
-        LPWSTR name;
+    (*x) = point.x;
+    (*y) = point.y;
+}
+void desktop_set_item_position(LPWSTR absolute_path, int x, int y)
+{
+    LPCITEMIDLIST pidl = to_relative_pidl(absolute_path);
+    POINT point;
+    point.x = x;
+    point.y = y;
 
-        hr = SHCreateItemFromIDList(pidl, IID_PPV_ARGS(&item));
-        log(hr, "item->GetAttributes(SFGAO_FILESYSTEM, &attributes)");
-
-        hr = item->GetDisplayName(SIGDN_NORMALDISPLAY, &name);
-        log(hr, "item->GetDisplayName(SIGDN_NORMALDISPLAY, &name)");
-
-        POINT position;
-        hr = desktop_folder_view->GetItemPosition(pidl, &position);
-        log(hr, "desktop_folder_view->GetItemPosition");
-
-        item_data current {};
-        current.name = name;
-        current.item = item;
-        current.x = position.x;
-        current.y = position.y;
-
-        *(items + i) = current;
-    }
+    auto hr = desktop_folder_view->SelectAndPositionItems(1, &pidl, &point, SVSI_NOSTATECHANGE);
+    log(hr, "desktop_folder_view->SelectAndPositionItems");
 }
