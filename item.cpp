@@ -41,9 +41,11 @@ void item_rename(item_data* token, LPWSTR name)
         hr =  token->item->GetParent(&parent);
         log(hr, "item->GetParent(&parent)");
 
-        hr = transfer_source->RenameItem(token->item, new_path.c_str(), TSF_NORMAL, &token->item);
+        IShellItem* result;
+        hr = transfer_source->RenameItem(token->item, name, TSF_NORMAL, &result);
         log(hr, "transfer_source->RenameItem");
 
+        token->item = result;
         token->name = name;
         return;
     }
