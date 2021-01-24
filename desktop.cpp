@@ -2,6 +2,8 @@
 
 #include <iostream>
 #include <system_error>
+#include <sstream>
+#include <vector>
 #include <string>
 #include <map>
 #include <stdlib.h>
@@ -12,6 +14,7 @@
 
 /* ========= utility ========= */
 static const LPCSTR progman_id = "Progman";
+static const LPCSTR workerw_id = "WorkerW";
 static const LPCSTR def_view_id = "SHELLDLL_DefView";
 static const LPCSTR sys_list_id = "SysListView32";
 
@@ -22,19 +25,56 @@ IFolderView2* desktop_folder_view;
 
 static item_data* desktop_items;
 
+std::string join(const std::vector<std::string>::const_iterator begin, const std::vector<std::string>::const_iterator end, const std::string& separator) {
+    if (begin == end) {
+        return "";
+    }
+
+    std::stringstream ss;
+    ss << *begin;
+    for (auto it = begin + 1; it != end; ++it) {
+        ss << separator << *it;
+    }
+
+    return ss.str();
+}
+
+std::string join(const std::vector<std::string>& segments, const std::string& separator) {
+    return join(segments.begin(), segments.end(), separator);
+}
+
+HWND find_window_by_class_path(const std::vector<std::string>::const_iterator begin, const std::vector<std::string>::const_iterator end, const HWND root = GetDesktopWindow()) {
+    if (begin == end) {
+        return root;
+    }
+
+    HWND child = NULL;
+    while ((child = FindWindowEx(root, child, begin->c_str(), NULL)) != NULL) {
+        log(true, "try find " + join(begin, end, "/") + " under " + std::to_string((uint64_t)child));
+        HWND result = find_window_by_class_path(begin + 1, end, child);
+        if (result != NULL) {
+            return result;
+        }
+    }
+
+    return NULL;
+}
+
+HWND find_window_by_class_path(const std::vector<std::string>& path) {
+    HWND hwnd = find_window_by_class_path(path.begin(), path.end());
+    log(hwnd, GetLastError(), "find_window_by_class_path " + join(path, "/"));
+    return hwnd;
+}
+
 HWND query_desktop_handle()
 {
-    const auto progman = FindWindow(progman_id, NULL);
-    log(progman, "FindWindow(progman_id, NULL)");
-
-    const auto def_view = FindWindowEx(progman, 0, def_view_id, NULL);
-    log(def_view, "FindWindowEx(progman, 0, def_view_id, NULL)");
-
-    const auto sys_list = FindWindowEx(def_view, 0, sys_list_id, NULL);
-    log(sys_list, "FindWindowEx(def_view,  0, sys_list_id, NULL)");
-
-    return sys_list;
+    HWND desktop = find_window_by_class_path({ progman_id, def_view_id, sys_list_id });
+    if (desktop != NULL) {
+        return desktop;
+    }
+    return find_window_by_class_path({ workerw_id, def_view_id, sys_list_id });
 }
+
 HANDLE query_desktop_process(HWND handle)
 {
     DWORD processID = 0;
