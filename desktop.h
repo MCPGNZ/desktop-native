@@ -12,6 +12,13 @@
 #define DESKTOP_FRAMEWORK_API __declspec(dllimport)
 #endif
 
+struct Item
+{
+    LPWSTR absolute_path;
+    int x;
+    int y;
+};
+
 extern HWND desktop_handle;
 extern HANDLE desktop_process;
 extern IShellFolder* desktop_shell_folder;
@@ -21,3 +28,4 @@ extern "C" DESKTOP_FRAMEWORK_API  void desktop_initialize();
 
 extern "C" DESKTOP_FRAMEWORK_API  void desktop_get_item_position(LPWSTR absolute_path, int* x, int* y);
 extern "C" DESKTOP_FRAMEWORK_API  void desktop_set_item_position(LPWSTR absolute_path, int x, int y);
+extern "C" DESKTOP_FRAMEWORK_API  void desktop_set_item_positions(Item* items, long num_items);

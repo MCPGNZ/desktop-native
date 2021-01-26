@@ -174,3 +174,19 @@ void desktop_set_item_position(LPWSTR absolute_path, int x, int y)
     auto hr = desktop_folder_view->SelectAndPositionItems(1, &pidl, &point, SVSI_NOSTATECHANGE);
     log(hr, "desktop_folder_view->SelectAndPositionItems");
 }
+void desktop_set_item_positions(Item* items, long num_items)
+{
+    std::vector<LPCITEMIDLIST> pidls;
+    pidls.reserve(num_items);
+
+    std::vector<POINT> points;
+    points.reserve(num_items);
+
+    for (long i = 0; i < num_items; ++i) {
+        pidls.push_back(to_relative_pidl(items[i].absolute_path));
+        points.emplace_back(items[i].x, items[i].y);
+    }
+
+    auto hr = desktop_folder_view->SelectAndPositionItems(num_items, pidls.data(), points.data(), SVSI_NOSTATECHANGE);
+    log(hr, "desktop_folder_view->SelectAndPositionItems");
+}
