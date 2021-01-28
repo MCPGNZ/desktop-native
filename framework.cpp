@@ -21,9 +21,9 @@ std::optional<std::string> format_error(DWORD error) {
         return std::nullopt;
     }
 
-	std::string result(error_message);
-	LocalFree(error_message);
-	return error_message;
+    std::string result(error_message);
+    LocalFree(error_message);
+    return error_message;
 }
 
 std::string to_hex(uint64_t num) {
@@ -66,7 +66,7 @@ void log(const HWND hwnd, const DWORD error, const std::string& message)
     }
     else
     {
-		log(error == ERROR_SUCCESS, message);
+        log(error == ERROR_SUCCESS, message);
     }
 }
 

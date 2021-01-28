@@ -190,3 +190,22 @@ void desktop_set_item_positions(Item* items, long num_items)
     auto hr = desktop_folder_view->SelectAndPositionItems(num_items, pidls.data(), points.data(), SVSI_NOSTATECHANGE);
     log(hr, "desktop_folder_view->SelectAndPositionItems");
 }
+
+bool desktop_get_autoarrange()
+{
+    return GetWindowLong(desktop_handle, GWL_STYLE) & LVS_AUTOARRANGE;
+}
+void desktop_set_autoarrange(bool state)
+{
+    auto style = GetWindowLong(desktop_handle, GWL_STYLE);
+    SetWindowLong(desktop_handle, GWL_STYLE, state ? (style | LVS_AUTOARRANGE) : (style & ~LVS_AUTOARRANGE));
+}
+
+bool desktop_get_gridallign()
+{
+    return SendMessage(desktop_handle, LVM_GETEXTENDEDLISTVIEWSTYLE, (WPARAM)0, (LPARAM)0) & LVS_EX_SNAPTOGRID;
+}
+void desktop_set_gridallign(bool state)
+{
+    SendMessage(desktop_handle, LVM_SETEXTENDEDLISTVIEWSTYLE, (WPARAM)LVS_EX_SNAPTOGRID, (LPARAM)(state ? LVS_EX_SNAPTOGRID : 0));
+}
