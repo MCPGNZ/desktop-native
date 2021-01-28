@@ -191,21 +191,15 @@ void desktop_set_item_positions(Item* items, long num_items)
     log(hr, "desktop_folder_view->SelectAndPositionItems");
 }
 
-bool desktop_get_autoarrange()
+bool desktop_get_style(DWORD flag)
 {
-    return GetWindowLong(desktop_handle, GWL_STYLE) & LVS_AUTOARRANGE;
+    DWORD flags = 0;
+    desktop_folder_view->GetCurrentFolderFlags(&flags);
+    return (flags & flag) != 0;
 }
-void desktop_set_autoarrange(bool state)
+void desktop_set_style(DWORD flag, bool state)
 {
-    auto style = GetWindowLong(desktop_handle, GWL_STYLE);
-    SetWindowLong(desktop_handle, GWL_STYLE, state ? (style | LVS_AUTOARRANGE) : (style & ~LVS_AUTOARRANGE));
-}
-
-bool desktop_get_gridallign()
-{
-    return SendMessage(desktop_handle, LVM_GETEXTENDEDLISTVIEWSTYLE, (WPARAM)0, (LPARAM)0) & LVS_EX_SNAPTOGRID;
-}
-void desktop_set_gridallign(bool state)
-{
-    SendMessage(desktop_handle, LVM_SETEXTENDEDLISTVIEWSTYLE, (WPARAM)LVS_EX_SNAPTOGRID, (LPARAM)(state ? LVS_EX_SNAPTOGRID : 0));
+    DWORD flags = 0;
+    desktop_folder_view->GetCurrentFolderFlags(&flags);
+    desktop_folder_view->SetCurrentFolderFlags(flag, state ? flag : ~flag);
 }

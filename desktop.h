@@ -30,8 +30,5 @@ extern "C" DESKTOP_FRAMEWORK_API  void desktop_get_item_position(LPWSTR absolute
 extern "C" DESKTOP_FRAMEWORK_API  void desktop_set_item_position(LPWSTR absolute_path, int x, int y);
 extern "C" DESKTOP_FRAMEWORK_API  void desktop_set_item_positions(Item * items, long num_items);
 
-extern "C" DESKTOP_FRAMEWORK_API bool desktop_get_autoarrange();
-extern "C" DESKTOP_FRAMEWORK_API void desktop_set_autoarrange(bool state);
-
-extern "C" DESKTOP_FRAMEWORK_API bool desktop_get_gridallign();
-extern "C" DESKTOP_FRAMEWORK_API void desktop_set_gridallign(bool state);
+extern "C" DESKTOP_FRAMEWORK_API bool desktop_get_style(DWORD flag);
+extern "C" DESKTOP_FRAMEWORK_API void desktop_set_style(DWORD flag, bool state);
