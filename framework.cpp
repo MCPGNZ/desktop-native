@@ -9,6 +9,9 @@ static CallbackInfo framework_callback_info;
 static CallbackError framework_callback_error;
 
 std::optional<std::string> format_error(DWORD error) {
+    // Workaround for ExecutionEngineException: String conversion error: Illegal byte sequence encounted in the input.
+    return std::nullopt;
+
     TCHAR* error_message;
     size_t size = FormatMessage(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
