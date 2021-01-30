@@ -8,6 +8,7 @@
 #include <map>
 #include <stdlib.h>
 
+#include <strsafe.h>
 #include <atlbase.h>
 
 #include "framework.h"
@@ -136,26 +137,30 @@ void desktop_initialize()
     desktop_shell_folder = query_desktop_shell_folder();
 }
 
-LPITEMIDLIST to_relative_pidl(LPWSTR absolute_path)
+int desktop_get_item_indices2(LPWSTR* absolute_paths)
 {
-    CComPtr<IShellItem> item;
-    auto hr = SHCreateItemFromParsingName(absolute_path, nullptr, IID_PPV_ARGS(&item));
-    log(hr, "SHCreateItemFromParsingName(absolute_path, nullptr, IID_PPV_ARGS(&item))");
+    int itemCount = 0;
 
-    CComHeapPtr<WCHAR> relative_path;
-    hr = item->GetDisplayName(SIGDN_PARENTRELATIVEPARSING, &relative_path);
-    log(hr, "GetDisplayName(SIGDN_PARENTRELATIVEPARSING, &relative_path)");
+    desktop_folder_view->ItemCount(SVGIO_ALLVIEW, &itemCount);
+    for (int i = 0; i < itemCount; ++i)
+    {
+        CComPtr<IShellItem> item;
+        desktop_folder_view->GetItem(i, IID_PPV_ARGS(&item));
 
-    return ILCreateFromPathW(relative_path);
+        CComHeapPtr<WCHAR> name;
+        auto hr = item->GetDisplayName(SIGDN_PARENTRELATIVEPARSING, &absolute_paths[i]);
+    }
+
+    return itemCount;
 }
-LPITEMIDLIST to_absolute_pidl(LPWSTR absolute_path)
+void desktop_set_item_position2(int index, int x, int y)
 {
-    return ILCreateFromPathW(absolute_path);
+    SendMessageW(desktop_handle, LVM_SETITEMPOSITION, index, MAKELPARAM(x, y));
 }
 
-void desktop_get_item_position(LPWSTR absolute_path, int* x, int* y)
+void desktop_get_item_position(LPWSTR relative_path, int* x, int* y)
 {
-    CComHeapPtr<ITEMIDLIST> pidl {to_relative_pidl(absolute_path)};
+    CComHeapPtr<ITEMIDLIST> pidl {ILCreateFromPathW(relative_path)};
     POINT point;
 
     auto hr = desktop_folder_view->GetItemPosition(pidl, &point);
@@ -164,30 +169,14 @@ void desktop_get_item_position(LPWSTR absolute_path, int* x, int* y)
     (*x) = point.x;
     (*y) = point.y;
 }
-void desktop_set_item_position(LPWSTR absolute_path, int x, int y)
+void desktop_set_item_position(LPWSTR relative_path, int x, int y)
 {
-    LPCITEMIDLIST pidl = to_relative_pidl(absolute_path);
+    LPCITEMIDLIST pidl = ILCreateFromPathW(relative_path);
     POINT point;
     point.x = x;
     point.y = y;
 
     auto hr = desktop_folder_view->SelectAndPositionItems(1, &pidl, &point, SVSI_NOSTATECHANGE);
-    log(hr, "desktop_folder_view->SelectAndPositionItems");
-}
-void desktop_set_item_positions(Item* items, long num_items)
-{
-    std::vector<LPCITEMIDLIST> pidls;
-    pidls.reserve(num_items);
-
-    std::vector<POINT> points;
-    points.reserve(num_items);
-
-    for (long i = 0; i < num_items; ++i) {
-        pidls.push_back(to_relative_pidl(items[i].absolute_path));
-        points.emplace_back(items[i].x, items[i].y);
-    }
-
-    auto hr = desktop_folder_view->SelectAndPositionItems(num_items, pidls.data(), points.data(), SVSI_NOSTATECHANGE);
     log(hr, "desktop_folder_view->SelectAndPositionItems");
 }
 
@@ -202,4 +191,15 @@ void desktop_set_style(DWORD flag, bool state)
     DWORD flags = 0;
     desktop_folder_view->GetCurrentFolderFlags(&flags);
     desktop_folder_view->SetCurrentFolderFlags(flag, state ? flag : ~flag);
+}
+
+void desktop_get_icon_size(FOLDERVIEWMODE* folderViewMode, int* iconSize)
+{
+    const auto hr = desktop_folder_view->GetViewModeAndIconSize(folderViewMode, iconSize);
+    log(hr, "desktop_folder_view->GetViewModeAndIconSize");
+}
+void desktop_set_icon_size(FOLDERVIEWMODE folderViewMode, int iconSize)
+{
+    const auto hr = desktop_folder_view->SetViewModeAndIconSize(folderViewMode, iconSize);
+    log(hr, "desktop_folder_view->SetViewModeAndIconSize");
 }
