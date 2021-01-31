@@ -150,7 +150,7 @@ int desktop_get_item_indices2(LPWSTR* absolute_paths)
         CComHeapPtr<WCHAR> name;
         auto hr = item->GetDisplayName(SIGDN_PARENTRELATIVEPARSING, &name);
 
-        wcscpy_s(absolute_paths[i], 512, L"");
+        wcscpy_s(absolute_paths[i], 1024, name);
     }
 
     return itemCount;
