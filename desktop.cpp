@@ -148,7 +148,9 @@ int desktop_get_item_indices2(LPWSTR* absolute_paths)
         desktop_folder_view->GetItem(i, IID_PPV_ARGS(&item));
 
         CComHeapPtr<WCHAR> name;
-        auto hr = item->GetDisplayName(SIGDN_PARENTRELATIVEPARSING, &absolute_paths[i]);
+        auto hr = item->GetDisplayName(SIGDN_PARENTRELATIVEPARSING, &name);
+
+        wcscpy_s(absolute_paths[i], 512, L"");
     }
 
     return itemCount;
@@ -171,12 +173,12 @@ void desktop_get_item_position(LPWSTR relative_path, int* x, int* y)
 }
 void desktop_set_item_position(LPWSTR relative_path, int x, int y)
 {
-    LPCITEMIDLIST pidl = ILCreateFromPathW(relative_path);
+    CComHeapPtr<ITEMIDLIST> pidl{ ILCreateFromPathW(relative_path) };
     POINT point;
     point.x = x;
     point.y = y;
 
-    auto hr = desktop_folder_view->SelectAndPositionItems(1, &pidl, &point, SVSI_NOSTATECHANGE);
+    auto hr = desktop_folder_view->SelectAndPositionItems(1, (LPCITEMIDLIST*)&pidl, &point, SVSI_NOSTATECHANGE);
     log(hr, "desktop_folder_view->SelectAndPositionItems");
 }
 
